@@ -221,7 +221,7 @@ func (m *Manager) PushMessage(msg Message) error {
 	select {
 	case m.msgQueue <- msg:
 	case <-t.C:
-		m.logger.Printf("message push timed out: '%s'", msg.Subject)
+		m.logger.Printf("message push timed out: '%s' | Subscriber email: '%s' ", msg.Subject, msg.Subscriber.Email)
 		return errors.New("message push timed out")
 	}
 	return nil
@@ -236,7 +236,7 @@ func (m *Manager) PushCampaignMessage(msg CampaignMessage) error {
 	select {
 	case m.campMsgQueue <- msg:
 	case <-t.C:
-		m.logger.Printf("message push timed out: '%s'", msg.Subject())
+		m.logger.Printf("message push timed out: '%s' | Subscriber email: '%s' ", msg.Subject(), msg.Subscriber.Email)
 		return errors.New("message push timed out")
 	}
 	return nil
@@ -389,8 +389,8 @@ func (m *Manager) worker() {
 			out.Headers = h
 
 			if err := m.messengers[msg.Campaign.Messenger].Push(out); err != nil {
-				m.logger.Printf("error sending message in campaign %s: subscriber %s: %v",
-					msg.Campaign.Name, msg.Subscriber.UUID, err)
+				m.logger.Printf("error sending message in campaign %s: subscriber %s (%s): %v",
+					msg.Campaign.Name, msg.Subscriber.UUID, msg.Subscriber.Email, err)
 
 				select {
 				case m.campMsgErrorQueue <- msgError{camp: msg.Campaign, err: err}:
